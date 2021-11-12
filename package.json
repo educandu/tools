@@ -1,22 +1,22 @@
 {
-  "name": "elmu-tools",
+  "name": "tools",
   "version": "0.0.0",
-  "description": "Tools for elmu development and maintenance",
+  "description": "Tools for educandu development and maintenance",
   "main": "src/index.js",
   "engines": {
     "node": ">=10.0.0"
   },
   "keywords": [],
   "license": "MIT",
-  "author": "ELMU Team <admin@elmu.online>",
-  "homepage": "https://github.com/elmu/elmu-tools",
+  "author": "Educandu Team <team@educandu.dev>",
+  "homepage": "https://github.com/educandu/tools",
   "repository": {
     "type": "git",
-    "url": "https://github.com/elmu/elmu-tools"
+    "url": "https://github.com/educandu/tools"
   },
   "private": true,
   "scripts": {
-    "lint": "eslint . copy-data-from-prod-to-stag dump-stag dump-prod --ext .js"
+    "lint": "eslint . copy-data dump-db --ext .js"
   },
   "dependencies": {},
   "devDependencies": {

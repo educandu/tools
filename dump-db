@@ -1,0 +1,38 @@
+#!/usr/bin/env node
+
+const path = require('path');
+const mongodump = require('./mongodump');
+const { ensureEnv } = require('./env-helper');
+
+const dumpDir = path.resolve('.tmp/dump');
+
+const getConfigFromParsingArguments = () => {
+  const args = process.argv;
+  const from = args.indexOf('-from');
+  const env = args[from + 1];
+
+  if (from === -1 || !env) {
+    throw new Error('Expected arguments: -from \'environment\'');
+  }
+
+  const sanitizedEnv = (env || '').trim().toUpperCase();
+
+  return {
+    dumpEnv: {
+      dbUri: ensureEnv(`DB_URI_${sanitizedEnv}`),
+      dbName: ensureEnv(`DB_NAME_${sanitizedEnv}`)
+    }
+  };
+
+};
+
+(async () => {
+  const { dumpEnv } = getConfigFromParsingArguments();
+
+  await mongodump.dump({
+    uri: dumpEnv.dbUri,
+    directory: dumpDir,
+    db: dumpEnv.dbName
+  });
+
+})();
