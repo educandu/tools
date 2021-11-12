@@ -1,0 +1,36 @@
+{
+  "name": "elmu-tools",
+  "version": "0.0.0",
+  "description": "Tools for elmu development and maintenance",
+  "main": "src/index.js",
+  "engines": {
+    "node": ">=10.0.0"
+  },
+  "keywords": [],
+  "license": "MIT",
+  "author": "ELMU Team <admin@elmu.online>",
+  "homepage": "https://github.com/elmu/elmu-tools",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/elmu/elmu-tools"
+  },
+  "private": true,
+  "scripts": {
+    "lint": "eslint . copy-data-from-prod-to-stag dump-stag dump-prod --ext .js"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "any-base": "~1.1.0",
+    "aws-sdk": "~2.548.0",
+    "bcrypt": "~3.0.6",
+    "del": "~5.1.0",
+    "eslint": "~8.1.0",
+    "eslint-plugin-import": "~2.25.2",
+    "execa": "~2.0.4",
+    "faker": "~5.5.3",
+    "mime": "~3.0.0",
+    "mkdirp": "~0.5.1",
+    "mongodb": "~3.3.2",
+    "uuid": "~3.3.3"
+  }
+}

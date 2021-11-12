@@ -1,0 +1,85 @@
+#!/usr/bin/env node
+const path = require('path');
+const s3Helper = require('./s3-helper');
+const mongodump = require('./mongodump');
+const { MongoClient } = require('mongodb');
+const userHelper = require('./user-helper');
+const mongoHelper = require('./mongo-helper');
+const { ensureEnv } = require('./env-helper');
+const { S3, Credentials } = require('aws-sdk');
+
+const s3Config = {
+  endpoint: ensureEnv('ELMU_S3_ENDPOINT'),
+  region: ensureEnv('ELMU_S3_REGION'),
+  accessKey: ensureEnv('ELMU_S3_ACCESS_KEY'),
+  secretKey: ensureEnv('ELMU_S3_SECRET_KEY')
+};
+
+const stag = {
+  dbUri: ensureEnv('ELMU_DB_STAGING_URI'),
+  dbName: ensureEnv('ELMU_DB_STAGING_DB_NAME'),
+  s3BucketName: ensureEnv('ELMU_S3_STAGING_BUCKET_NAME')
+};
+
+const prod = {
+  dbUri: ensureEnv('ELMU_DB_PRODUCTION_URI'),
+  dbName: ensureEnv('ELMU_DB_PRODUCTION_DB_NAME'),
+  s3BucketName: ensureEnv('ELMU_S3_PRODUCTION_BUCKET_NAME')
+};
+
+const dumpEnv = prod;
+const restoreEnv = stag;
+const dumpDir = path.resolve('.tmp/dump');
+
+(async () => {
+
+  await mongodump.dump({
+    uri: dumpEnv.dbUri,
+    directory: dumpDir,
+    db: dumpEnv.dbName
+  });
+
+  await mongodump.restore({
+    uri: restoreEnv.dbUri,
+    directory: dumpDir,
+    fromDb: dumpEnv.dbName,
+    toDb: restoreEnv.dbName
+  });
+
+  const mongoClient = await MongoClient.connect(restoreEnv.dbUri, { useUnifiedTopology: true, useNewUrlParser: true });
+  const db = mongoClient.db();
+  const usersCollection = await db.collection('users');
+
+  const users = await usersCollection.find({}).toArray();
+  const anonymizeUsers = await userHelper.anonymizeUsers(users);
+
+  for (const user of anonymizeUsers) {
+    console.log(`Creating user ${user.username}`);
+    // eslint-disable-next-line no-await-in-loop
+    await mongoHelper.upsertItemById(usersCollection, user);
+  }
+
+  await mongoClient.close();
+
+  const s3 = new S3({
+    apiVersion: '2006-03-01',
+    endpoint: s3Config.endpoint,
+    region: s3Config.region,
+    credentials: new Credentials(s3Config.accessKey, s3Config.secretKey)
+  });
+
+  const oldObjects = await s3Helper.listAllObjects(s3, restoreEnv.s3BucketName);
+  for (const obj of oldObjects) {
+    console.log(`Deleting object ${obj.Key}`);
+    // eslint-disable-next-line no-await-in-loop
+    await s3Helper.deleteObject(s3, restoreEnv.s3BucketName, obj.Key);
+  }
+
+  const sourceObjects = await s3Helper.listAllObjects(s3, dumpEnv.s3BucketName);
+  for (const obj of sourceObjects) {
+    console.log(`Copying object ${obj.Key}`);
+    // eslint-disable-next-line no-await-in-loop
+    await s3Helper.copyObject(s3, dumpEnv.s3BucketName, obj.Key, restoreEnv.s3BucketName);
+  }
+
+})();
