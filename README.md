@@ -2,8 +2,6 @@
 
 Tools for educandu development and maintenance.
 
-## Tools
-
 1. `copy-data`
   Drops all destination data (mongoDB and S3) and replaces it with the source data.
   Anonymizes all sensitive user information, replacing it with mock data.
@@ -27,27 +25,32 @@ Tools for educandu development and maintenance.
 
 Example for copying data from staging to integration:
 
-export S3_ENDPOINT='https://s3.eu-central-1.amazonaws.com'
-export S3_REGION='eu-central-1'
-export S3_ACCESS_KEY='DSJHFDKSJFHERWUFRUKRF'
-export S3_SECRET_KEY='DFLJKDSDFDS8FDF7DS/DSFLKFJDSLKFDJDJLF8+e'
+```
+$ export S3_ENDPOINT='https://s3.eu-central-1.amazonaws.com'
+$ export S3_REGION='eu-central-1'
+$ export S3_ACCESS_KEY='DSJHFDKSJFHERWUFRUKRF'
+$ export S3_SECRET_KEY='DFLJKDSDFDS8FDF7DS/DSFLKFJDSLKFDJDJLF8+e'
 
-export DB_URI_INT='mongodb+srv://user:fjdshf87dsV@int.mongodb.net/name'
-export DB_NAME_INT='int.database'
-export S3_BUCKET_NAME_INT='int.bucket.name'
+$ export DB_URI_INT='mongodb+srv://user:fjdshf87dsV@int.mongodb.net/name'
+$ export DB_NAME_INT='int.database'
+$ export S3_BUCKET_NAME_INT='int.bucket.name'
 
-export DB_URI_STAG='mongodb+srv://user:8798437432@stag.mongodb.net/name'
-export DB_NAME_STAG='stag.database'
-export S3_BUCKET_NAME_STAG='stag.bucket.name'
+$ export DB_URI_STAG='mongodb+srv://user:8798437432@stag.mongodb.net/name'
+$ export DB_NAME_STAG='stag.database'
+$ export S3_BUCKET_NAME_STAG='stag.bucket.name'
+```
 
 `$ ./copy-data -from STAG -to INT`
 
 ### Running `dump-db`
 
-export DB_URI_INT='mongodb+srv://user:fjdshf87dsV@int.mongodb.net/name'
-export DB_NAME_INT='int.database'
+```
+$ export DB_URI_INT='mongodb+srv://user:fjdshf87dsV@int.mongodb.net/name'
+$ export DB_NAME_INT='int.database'
+```
 
 `$ ./dump-db -from INT`
+
 ## License
 
 Educandu is released under the MIT License. See the bundled LICENSE file for details.
