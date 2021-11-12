@@ -8,7 +8,7 @@ const mongoHelper = require('./mongo-helper');
 const { ensureEnv } = require('./env-helper');
 const { S3, Credentials } = require('aws-sdk');
 
-const dumpDir = path.resolve('.tmp/dump');
+const dumpDir = path.resolve('./dump');
 
 const ensureConfigForEnv = env => {
   const sanitizedEnv = (env || '').trim().toUpperCase();

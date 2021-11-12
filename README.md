@@ -8,7 +8,7 @@ Tools for educandu development and maintenance.
   Drops all destination data (mongoDB and S3) and replaces it with the source data.
   Anonymizes all sensitive user information, replacing it with mock data.
 2. `dump-db`
-  Creates a mongodump of the MongoDb database locally in `./tmp/dump/<nameOfDatabase>`
+  Creates a mongodump of the MongoDb database locally in `./dump/<nameOfDatabase>`
 
 ## Environment variables
 

@@ -4,7 +4,7 @@ const path = require('path');
 const mongodump = require('./mongodump');
 const { ensureEnv } = require('./env-helper');
 
-const dumpDir = path.resolve('.tmp/dump');
+const dumpDir = path.resolve('./dump');
 
 const getConfigFromParsingArguments = () => {
   const args = process.argv;
