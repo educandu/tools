@@ -2,13 +2,12 @@ const faker = require('faker');
 const bcrypt = require('bcrypt');
 const uniqueId = require('./unique-id');
 
-const PROVIDER_NAME_ELMU = 'elmu';
 const PASSWORD_SALT_ROUNDS = 1024;
 
 async function createAdminUser() {
   return {
     _id: uniqueId.create(),
-    provider: PROVIDER_NAME_ELMU,
+    provider: 'educandu',
     username: 'test',
     passwordHash: await bcrypt.hash('test', PASSWORD_SALT_ROUNDS),
     email: 'test@test.com',
