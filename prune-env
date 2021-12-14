@@ -1,0 +1,55 @@
+#!/usr/bin/env node
+
+const s3Helper = require('./s3-helper');
+const { MongoClient } = require('mongodb');
+const mongoHelper = require('./mongo-helper');
+const { ensureEnv } = require('./env-helper');
+const { S3, Credentials } = require('aws-sdk');
+
+const getConfigFromParsingArguments = () => {
+  const args = process.argv;
+  const envFlag = args.indexOf('-env');
+  const env = args[envFlag + 1];
+
+  if (envFlag === -1 || !env) {
+    throw new Error('Expected arguments: -env \'environment\'');
+  }
+
+  const sanitizedEnv = (env || '').trim().toUpperCase();
+
+  return {
+    s3Config: {
+      endpoint: ensureEnv('S3_ENDPOINT'),
+      region: ensureEnv('S3_REGION'),
+      accessKey: ensureEnv('S3_ACCESS_KEY'),
+      secretKey: ensureEnv('S3_SECRET_KEY')
+    },
+    pruneEnv: {
+      dbUri: ensureEnv(`DB_URI_${sanitizedEnv}`),
+      dbName: ensureEnv(`DB_NAME_${sanitizedEnv}`),
+      s3BucketName: ensureEnv(`S3_BUCKET_NAME_${sanitizedEnv}`)
+    }
+  };
+};
+
+(async () => {
+
+  const { s3Config, pruneEnv } = getConfigFromParsingArguments();
+
+  console.log(`Pruning \n${JSON.stringify(pruneEnv)}\n`);
+
+  const mongoClient = await MongoClient.connect(pruneEnv.dbUri, { useUnifiedTopology: true });
+  const db = mongoClient.db();
+  await mongoHelper.dropAllCollections(db);
+  await mongoClient.close();
+
+  const s3 = new S3({
+    apiVersion: '2006-03-01',
+    endpoint: s3Config.endpoint,
+    region: s3Config.region,
+    credentials: new Credentials(s3Config.accessKey, s3Config.secretKey)
+  });
+
+  await s3Helper.deleteAllObjects(s3, pruneEnv.s3BucketName);
+
+})();

@@ -65,7 +65,7 @@ const getConfigFromParsingArguments = () => {
     toDb: restoreEnv.dbName
   });
 
-  const mongoClient = await MongoClient.connect(restoreEnv.dbUri, { useUnifiedTopology: true, useNewUrlParser: true });
+  const mongoClient = await MongoClient.connect(restoreEnv.dbUri, { useUnifiedTopology: true });
   const db = mongoClient.db();
   const usersCollection = await db.collection('users');
 

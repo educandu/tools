@@ -39,6 +39,15 @@ function deleteObject(s3, bucketName, key) {
   });
 }
 
+async function deleteAllObjects(s3, bucketName) {
+  const oldObjects = await listAllObjects(s3, bucketName);
+  for (const obj of oldObjects) {
+    console.log(`Deleting object ${obj.Key}`);
+    // eslint-disable-next-line no-await-in-loop
+    await deleteObject(s3, bucketName, obj.Key);
+  }
+}
+
 function copyObject(s3, sourceBucketName, sourceKey, destinationBucketName) {
   const params = {
     Bucket: destinationBucketName,
@@ -67,6 +76,7 @@ function updateObject({ s3, bucketName, key, metadata, contentType }) {
 module.exports = {
   listAllObjects,
   deleteObject,
+  deleteAllObjects,
   copyObject,
   updateObject
 };
