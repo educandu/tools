@@ -1,6 +1,9 @@
 async function dropAllCollections(db) {
   const collections = await db.collections();
-  await Promise.all(collections.map(col => db.dropCollection(col.s.name)));
+  await Promise.all(collections.map(col => {
+    console.log(`Dropping collection ${col.collectionName}`);
+    return db.dropCollection(col.collectionName);
+  }));
 }
 
 function deleteAllItems(collection) {
