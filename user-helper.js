@@ -1,8 +1,9 @@
-const faker = require('faker');
+const Chance = require('chance');
 const bcrypt = require('bcrypt');
 const uniqueId = require('./unique-id');
 
 const PASSWORD_SALT_ROUNDS = 1024;
+const chance = new Chance();
 
 async function createAdminUser() {
   return {
@@ -20,20 +21,21 @@ async function createAdminUser() {
 }
 
 async function anonymizeUser(user) {
-  const password = faker.internet.password();
+  const password = uniqueId.create();
+
   return {
     ...user,
-    username: faker.internet.userName(),
+    username: `${chance.first().toLowerCase()}${chance.last().toLowerCase()}${chance.integer({ min: 0, max: 100 })}`,
     passwordHash: await bcrypt.hash(password, PASSWORD_SALT_ROUNDS),
-    email: faker.internet.email(null, null, 'test.com'),
+    email: chance.email({ domain: 'test.com' }),
     profile: {
-      firstName: faker.name.firstName(),
-      lastName: faker.name.lastName(),
-      street: faker.address.streetAddress(),
+      firstName: chance.first(),
+      lastName: chance.last(),
+      street: chance.street(),
       streetSupplement: '',
-      postalCode: faker.address.zipCode(),
-      city: faker.address.cityName(),
-      country: faker.address.countryCode()
+      postalCode: chance.zip(),
+      city: chance.city(),
+      country: chance.country()
     }
   };
 }
