@@ -8,6 +8,8 @@ const mongoHelper = require('./mongo-helper');
 const { ensureEnv } = require('./env-helper');
 const { S3, Credentials } = require('aws-sdk');
 
+const ANONYMIZE_USERS = true;
+
 const dumpDir = path.resolve('./dump');
 
 const ensureConfigForEnv = env => {
@@ -65,20 +67,22 @@ const getConfigFromParsingArguments = () => {
     toDb: restoreEnv.dbName
   });
 
-  const mongoClient = await MongoClient.connect(restoreEnv.dbUri, { useUnifiedTopology: true });
-  const db = mongoClient.db();
-  const usersCollection = await db.collection('users');
+  if (ANONYMIZE_USERS) {
+    const mongoClient = await MongoClient.connect(restoreEnv.dbUri, { useUnifiedTopology: true });
+    const db = mongoClient.db();
+    const usersCollection = await db.collection('users');
 
-  const users = await usersCollection.find({}).toArray();
-  const anonymizeUsers = await userHelper.anonymizeUsers(users);
+    const users = await usersCollection.find({}).toArray();
+    const anonymizedUsers = await userHelper.anonymizeUsers(users);
 
-  for (const user of anonymizeUsers) {
-    console.log(`Creating user ${user.username}`);
-    // eslint-disable-next-line no-await-in-loop
-    await mongoHelper.upsertItemById(usersCollection, user);
+    for (const user of anonymizedUsers) {
+      console.log(`Creating user ${user.username}`);
+      // eslint-disable-next-line no-await-in-loop
+      await mongoHelper.upsertItemById(usersCollection, user);
+    }
+
+    await mongoClient.close();
   }
-
-  await mongoClient.close();
 
   const s3 = new S3({
     apiVersion: '2006-03-01',
