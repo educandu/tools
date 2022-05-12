@@ -42,7 +42,11 @@ $ export DB_NAME_STAG='stag.database'
 $ export S3_BUCKET_NAME_STAG='stag.bucket.name'
 ```
 
-`$ ./copy-data -from STAG -to INT`
+`$ ./copy-data -from STAG -to INT -anonymize`
+
+The `-anonymize` flag is optional and setting it will do two things:
+    * Anonymize all users in the DB
+    * Create an admin user account with username/password "test"
 
 ### Running `dump-db`
 

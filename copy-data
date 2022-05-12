@@ -8,8 +8,6 @@ const mongoHelper = require('./mongo-helper');
 const { ensureEnv } = require('./env-helper');
 const { S3, Credentials } = require('aws-sdk');
 
-const ANONYMIZE_USERS = true;
-
 const dumpDir = path.resolve('./dump');
 
 const ensureConfigForEnv = env => {
@@ -44,13 +42,14 @@ const getConfigFromParsingArguments = () => {
       secretKey: ensureEnv('S3_SECRET_KEY')
     },
     dumpEnv: fromConfig,
-    restoreEnv: toConfig
+    restoreEnv: toConfig,
+    anonymizeUsers: args.includes('-anonymize')
   };
 };
 
 (async () => {
 
-  const { s3Config, dumpEnv, restoreEnv } = getConfigFromParsingArguments();
+  const { s3Config, dumpEnv, restoreEnv, anonymizeUsers } = getConfigFromParsingArguments();
 
   console.log(`Copying from\n${JSON.stringify(dumpEnv)}\nto\n${JSON.stringify(restoreEnv)}`);
 
@@ -67,16 +66,15 @@ const getConfigFromParsingArguments = () => {
     toDb: restoreEnv.dbName
   });
 
-  if (ANONYMIZE_USERS) {
+  if (anonymizeUsers) {
     const mongoClient = await MongoClient.connect(restoreEnv.dbUri, { useUnifiedTopology: true });
-    const db = mongoClient.db();
-    const usersCollection = await db.collection('users');
+    const usersCollection = await mongoClient.db().collection('users');
 
     const users = await usersCollection.find({}).toArray();
-    const anonymizedUsers = await userHelper.anonymizeUsers(users);
+    const updatedUsers = await userHelper.anonymizeUsers(users);
 
-    for (const user of anonymizedUsers) {
-      console.log(`Creating user ${user.username}`);
+    for (const user of updatedUsers) {
+      console.log(`Updating anonymized user ${user.username}`);
       // eslint-disable-next-line no-await-in-loop
       await mongoHelper.upsertItemById(usersCollection, user);
     }
