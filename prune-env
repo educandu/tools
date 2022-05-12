@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 
 const s3Helper = require('./s3-helper');
-const { MongoClient } = require('mongodb');
 const mongoHelper = require('./mongo-helper');
 const { ensureEnv } = require('./env-helper');
 const { S3, Credentials } = require('aws-sdk');
+const { MongoClient, ServerApiVersion } = require('mongodb');
 
 const getConfigFromParsingArguments = () => {
   const args = process.argv;
@@ -38,7 +38,8 @@ const getConfigFromParsingArguments = () => {
 
   console.log(`Pruning \n${JSON.stringify(pruneEnv)}\n`);
 
-  const mongoClient = await MongoClient.connect(pruneEnv.dbUri, { useUnifiedTopology: true });
+  const mongoOptions = { useUnifiedTopology: true, serverApi: ServerApiVersion.v1 };
+  const mongoClient = await MongoClient.connect(pruneEnv.dbUri, mongoOptions);
   const db = mongoClient.db();
   await mongoHelper.dropAllCollections(db);
   await mongoClient.close();

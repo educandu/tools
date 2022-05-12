@@ -2,11 +2,11 @@
 const path = require('path');
 const s3Helper = require('./s3-helper');
 const mongodump = require('./mongodump');
-const { MongoClient } = require('mongodb');
 const userHelper = require('./user-helper');
 const mongoHelper = require('./mongo-helper');
 const { ensureEnv } = require('./env-helper');
 const { S3, Credentials } = require('aws-sdk');
+const { MongoClient, ServerApiVersion } = require('mongodb');
 
 const dumpDir = path.resolve('./dump');
 
@@ -67,7 +67,8 @@ const getConfigFromParsingArguments = () => {
   });
 
   if (anonymizeUsers) {
-    const mongoClient = await MongoClient.connect(restoreEnv.dbUri, { useUnifiedTopology: true });
+    const mongoOptions = { useUnifiedTopology: true, serverApi: ServerApiVersion.v1 };
+    const mongoClient = await MongoClient.connect(restoreEnv.dbUri, mongoOptions);
     const usersCollection = await mongoClient.db().collection('users');
 
     const users = await usersCollection.find({}).toArray();

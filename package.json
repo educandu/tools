@@ -4,7 +4,7 @@
   "description": "Tools for educandu development and maintenance",
   "main": "src/index.js",
   "engines": {
-    "node": ">=10.0.0"
+    "node": "^16.13.1"
   },
   "keywords": [],
   "license": "MIT",
@@ -19,19 +19,18 @@
     "lint": "eslint . copy-data dump-db --ext .js"
   },
   "dependencies": {
-    "mongodb": "~4.2.2"
-  },
-  "devDependencies": {
     "any-base": "~1.1.0",
-    "aws-sdk": "~2.548.0",
-    "bcrypt": "~3.0.6",
+    "aws-sdk": "~2.1133.0",
+    "bcrypt": "~5.0.1",
     "chance": "~1.1.8",
     "del": "~5.1.0",
-    "eslint": "~8.1.0",
-    "eslint-plugin-import": "~2.25.2",
     "execa": "~2.0.4",
     "mime": "~3.0.0",
     "mkdirp": "~0.5.1",
-    "uuid": "~3.3.3"
+    "mongodb": "~4.6.0",
+    "uuid": "~8.3.2"
+  },
+  "devDependencies": {
+    "eslint": "~8.15.0"
   }
 }

@@ -1,24 +1,16 @@
 {
-  "extends": ["eslint:all", "plugin:import/recommended"],
+  "extends": ["eslint:all"],
   "env": {
     "es6": true,
     "node": true
   },
   "parserOptions": {
     "ecmaVersion": 2020,
-    "sourceType": "module",
+    "sourceType": "script",
     "ecmaFeatures": {
       "impliedStrict": true
     }
   },
-  "settings": {
-    "react": {
-      "version": "16.9"
-    }
-  },
-  "plugins": [
-    "import"
-  ],
   "rules": {
     "array-element-newline": ["off"],
     "arrow-parens": ["error", "as-needed"],
@@ -72,7 +64,6 @@
     "quote-props": ["error", "consistent-as-needed"],
     "quotes": ["error", "single"],
     "require-unicode-regexp": ["off"],
-    "wrap-iife": ["error", "inside"],
-    "import/no-named-as-default-member": ["off"]
+    "wrap-iife": ["error", "inside"]
   }
 }
