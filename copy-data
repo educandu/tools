@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 const path = require('path');
+const { queue } = require('async');
 const s3Helper = require('./s3-helper');
 const mongodump = require('./mongodump');
 const userHelper = require('./user-helper');
@@ -8,7 +9,11 @@ const { ensureEnv } = require('./env-helper');
 const { S3, Credentials } = require('aws-sdk');
 const { MongoClient, ServerApiVersion } = require('mongodb');
 
+const OBJECT_COPY_CONCURRENCY = 10;
+
 const dumpDir = path.resolve('./dump');
+
+const percentageFormatter = new Intl.NumberFormat('en', { style: 'percent', maximumFractionDigits: 0 });
 
 const ensureConfigForEnv = env => {
   const sanitizedEnv = (env || '').trim().toUpperCase();
@@ -16,6 +21,10 @@ const ensureConfigForEnv = env => {
   return {
     dbUri: ensureEnv(`DB_URI_${sanitizedEnv}`),
     dbName: ensureEnv(`DB_NAME_${sanitizedEnv}`),
+    s3Endpoint: ensureEnv(`S3_ENDPOINT_${sanitizedEnv}`),
+    s3Region: ensureEnv(`S3_REGION_${sanitizedEnv}`),
+    s3AccessKey: ensureEnv(`S3_ACCESS_KEY_${sanitizedEnv}`),
+    s3SecretKey: ensureEnv(`S3_SECRET_KEY_${sanitizedEnv}`),
     s3BucketName: ensureEnv(`S3_BUCKET_NAME_${sanitizedEnv}`)
   };
 };
@@ -35,40 +44,42 @@ const getConfigFromParsingArguments = () => {
   const toConfig = ensureConfigForEnv(toEnv);
 
   return {
-    s3Config: {
-      endpoint: ensureEnv('S3_ENDPOINT'),
-      region: ensureEnv('S3_REGION'),
-      accessKey: ensureEnv('S3_ACCESS_KEY'),
-      secretKey: ensureEnv('S3_SECRET_KEY')
-    },
-    dumpEnv: fromConfig,
-    restoreEnv: toConfig,
+    sourceEnv: fromConfig,
+    destinationEnv: toConfig,
     anonymizeUsers: args.includes('-anonymize')
   };
 };
 
+const canCopyDirectlyWithinS3 = (env1, env2) => {
+  return env1.s3Endpoint === env2.s3Endpoint
+    && env1.s3Region === env2.s3Region
+    && env1.s3AccessKey === env2.s3AccessKey
+    && env1.s3SecretKey === env2.s3SecretKey;
+};
+
 (async () => {
 
-  const { s3Config, dumpEnv, restoreEnv, anonymizeUsers } = getConfigFromParsingArguments();
+  const { sourceEnv, destinationEnv, anonymizeUsers } = getConfigFromParsingArguments();
+  const isSameS3Account = canCopyDirectlyWithinS3(sourceEnv, destinationEnv);
 
-  console.log(`Copying from\n${JSON.stringify(dumpEnv)}\nto\n${JSON.stringify(restoreEnv)}`);
+  console.log(`Copying from\n${JSON.stringify(sourceEnv)}\nto\n${JSON.stringify(destinationEnv)}`);
 
   await mongodump.dump({
-    uri: dumpEnv.dbUri,
+    uri: sourceEnv.dbUri,
     directory: dumpDir,
-    db: dumpEnv.dbName
+    db: sourceEnv.dbName
   });
 
   await mongodump.restore({
-    uri: restoreEnv.dbUri,
+    uri: destinationEnv.dbUri,
     directory: dumpDir,
-    fromDb: dumpEnv.dbName,
-    toDb: restoreEnv.dbName
+    fromDb: sourceEnv.dbName,
+    toDb: destinationEnv.dbName
   });
 
   if (anonymizeUsers) {
     const mongoOptions = { useUnifiedTopology: true, serverApi: ServerApiVersion.v1 };
-    const mongoClient = await MongoClient.connect(restoreEnv.dbUri, mongoOptions);
+    const mongoClient = await MongoClient.connect(destinationEnv.dbUri, mongoOptions);
     const usersCollection = await mongoClient.db().collection('users');
 
     const users = await usersCollection.find({}).toArray();
@@ -83,25 +94,70 @@ const getConfigFromParsingArguments = () => {
     await mongoClient.close();
   }
 
-  const s3 = new S3({
+  const sourceS3 = new S3({
     apiVersion: '2006-03-01',
-    endpoint: s3Config.endpoint,
-    region: s3Config.region,
-    credentials: new Credentials(s3Config.accessKey, s3Config.secretKey)
+    endpoint: sourceEnv.s3Endpoint,
+    region: sourceEnv.s3Region,
+    credentials: new Credentials(sourceEnv.s3AccessKey, sourceEnv.s3SecretKey)
   });
 
-  const oldObjects = await s3Helper.listAllObjects(s3, restoreEnv.s3BucketName);
+  const destinationS3 = isSameS3Account
+    ? sourceS3
+    : new S3({
+      apiVersion: '2006-03-01',
+      endpoint: destinationEnv.s3Endpoint,
+      region: destinationEnv.s3Region,
+      credentials: new Credentials(destinationEnv.s3AccessKey, destinationEnv.s3SecretKey)
+    });
+
+  console.log(`Deleting old objects from destination: ${destinationEnv.s3BucketName}`);
+  const oldObjects = await s3Helper.listAllObjects(destinationS3, destinationEnv.s3BucketName);
   for (const obj of oldObjects) {
     console.log(`Deleting object ${obj.Key}`);
     // eslint-disable-next-line no-await-in-loop
-    await s3Helper.deleteObject(s3, restoreEnv.s3BucketName, obj.Key);
+    await s3Helper.deleteObject(destinationS3, destinationEnv.s3BucketName, obj.Key);
   }
 
-  const sourceObjects = await s3Helper.listAllObjects(s3, dumpEnv.s3BucketName);
-  for (const obj of sourceObjects) {
-    console.log(`Copying object ${obj.Key}`);
-    // eslint-disable-next-line no-await-in-loop
-    await s3Helper.copyObject(s3, dumpEnv.s3BucketName, obj.Key, restoreEnv.s3BucketName);
+  console.log(`Listing all objects from source: ${sourceEnv.s3BucketName}`);
+  const sourceObjects = await s3Helper.listAllObjects(sourceS3, sourceEnv.s3BucketName);
+
+  console.log(`Copying ${sourceObjects.length} objects ${isSameS3Account ? 'within S3' : 'between S3 accounts'}  from ${sourceEnv.s3BucketName} to ${destinationEnv.s3BucketName}`);
+
+  let errorOccurred = false;
+  const copyObject = isSameS3Account
+    ? obj => s3Helper.copyObjectWithinSameS3Account({
+      s3: sourceS3,
+      sourceBucketName: sourceEnv.s3BucketName,
+      destinationBucketName: destinationEnv.s3BucketName,
+      objectKey: obj.Key
+    })
+    : obj => s3Helper.copyObjectBetweenDifferentS3Accounts({
+      sourceS3,
+      destinationS3,
+      sourceBucketName: sourceEnv.s3BucketName,
+      destinationBucketName: destinationEnv.s3BucketName,
+      objectKey: obj.Key
+    });
+
+  const q = queue(({ obj, index }, callback) => {
+    console.log(`[${percentageFormatter.format((index + 1) / sourceObjects.length)}] Copying object ${obj.Key}`);
+    copyObject(obj).then(() => callback?.(), err => callback?.(err));
+  }, OBJECT_COPY_CONCURRENCY);
+
+  q.error((err, { obj }) => {
+    console.error(`Error while copying ${obj.key}`, err);
+    errorOccurred = true;
+    q.remove(() => true);
+  });
+
+  q.push(sourceObjects.map((obj, index) => ({ obj, index })));
+
+  await q.drain();
+
+  if (errorOccurred) {
+    console.error('CANCELLED BECAUSE OF ERRORS!');
+  } else {
+    console.log('SUCESSFULLY FINISHED!');
   }
 
 })();

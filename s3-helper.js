@@ -1,3 +1,5 @@
+const { PassThrough } = require('stream');
+
 function listNext1000Objects(s3, bucketName, continuationToken) {
   const params = {
     Bucket: bucketName,
@@ -48,15 +50,40 @@ async function deleteAllObjects(s3, bucketName) {
   }
 }
 
-function copyObject(s3, sourceBucketName, sourceKey, destinationBucketName) {
-  const params = {
-    Bucket: destinationBucketName,
-    CopySource: `/${sourceBucketName}/${encodeURIComponent(sourceKey)}`,
-    Key: sourceKey
-  };
+function headObject({ s3, bucketName, objectKey }) {
+  return new Promise((resolve, reject) => {
+    s3.headObject({ Bucket: bucketName, Key: objectKey }, (err, data) => err ? reject(err) : resolve(data));
+  });
+}
+
+function copyObjectWithinSameS3Account({ s3, sourceBucketName, destinationBucketName, objectKey }) {
+  return new Promise((resolve, reject) => {
+    s3.copyObject({
+      Bucket: destinationBucketName,
+      CopySource: `/${sourceBucketName}/${encodeURIComponent(objectKey)}`,
+      Key: objectKey
+    }, (err, data) => err ? reject(err) : resolve(data));
+  });
+}
+
+async function copyObjectBetweenDifferentS3Accounts({ sourceS3, destinationS3, sourceBucketName, destinationBucketName, objectKey }) {
+  const { ContentType: contentType, Metadata: metadata } = await headObject({ s3: sourceS3, bucketName: sourceBucketName, objectKey });
 
   return new Promise((resolve, reject) => {
-    s3.copyObject(params, (err, data) => err ? reject(err) : resolve(data));
+    const stream = new PassThrough();
+
+    destinationS3.upload({
+      Bucket: destinationBucketName,
+      Key: objectKey,
+      Body: stream,
+      Metadata: metadata,
+      ContentType: contentType
+    }, (err, data) => err ? reject(err) : resolve(data));
+
+    sourceS3.getObject({
+      Bucket: sourceBucketName,
+      Key: objectKey
+    }).createReadStream().pipe(stream);
   });
 }
 
@@ -77,6 +104,7 @@ module.exports = {
   listAllObjects,
   deleteObject,
   deleteAllObjects,
-  copyObject,
+  copyObjectWithinSameS3Account,
+  copyObjectBetweenDifferentS3Accounts,
   updateObject
 };

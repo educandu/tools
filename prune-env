@@ -18,15 +18,13 @@ const getConfigFromParsingArguments = () => {
   const sanitizedEnv = (env || '').trim().toUpperCase();
 
   return {
-    s3Config: {
-      endpoint: ensureEnv('S3_ENDPOINT'),
-      region: ensureEnv('S3_REGION'),
-      accessKey: ensureEnv('S3_ACCESS_KEY'),
-      secretKey: ensureEnv('S3_SECRET_KEY')
-    },
     pruneEnv: {
       dbUri: ensureEnv(`DB_URI_${sanitizedEnv}`),
       dbName: ensureEnv(`DB_NAME_${sanitizedEnv}`),
+      s3Endpoint: ensureEnv(`S3_ENDPOINT_${sanitizedEnv}`),
+      s3Region: ensureEnv(`S3_REGION_${sanitizedEnv}`),
+      s3AccessKey: ensureEnv(`S3_ACCESS_KEY_${sanitizedEnv}`),
+      s3SecretKey: ensureEnv(`S3_SECRET_KEY_${sanitizedEnv}`),
       s3BucketName: ensureEnv(`S3_BUCKET_NAME_${sanitizedEnv}`)
     }
   };
@@ -34,7 +32,7 @@ const getConfigFromParsingArguments = () => {
 
 (async () => {
 
-  const { s3Config, pruneEnv } = getConfigFromParsingArguments();
+  const { pruneEnv } = getConfigFromParsingArguments();
 
   console.log(`Pruning \n${JSON.stringify(pruneEnv)}\n`);
 
@@ -46,9 +44,9 @@ const getConfigFromParsingArguments = () => {
 
   const s3 = new S3({
     apiVersion: '2006-03-01',
-    endpoint: s3Config.endpoint,
-    region: s3Config.region,
-    credentials: new Credentials(s3Config.accessKey, s3Config.secretKey)
+    endpoint: pruneEnv.s3Endpoint,
+    region: pruneEnv.s3Region,
+    credentials: new Credentials(pruneEnv.s3AccessKey, pruneEnv.s3SecretKey)
   });
 
   await s3Helper.deleteAllObjects(s3, pruneEnv.s3BucketName);
