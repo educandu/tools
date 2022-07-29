@@ -1,4 +1,21 @@
 const { PassThrough } = require('stream');
+const { S3, Credentials } = require('aws-sdk');
+
+function createS3({ s3Endpoint, s3Region, s3AccessKey, s3SecretKey }) {
+  return s3Endpoint.includes('amazonaws')
+    ? new S3({
+      apiVersion: '2006-03-01',
+      endpoint: s3Endpoint,
+      region: s3Region,
+      credentials: new Credentials(s3AccessKey, s3SecretKey)
+    })
+    : new S3({
+      endpoint: s3Endpoint,
+      credentials: new Credentials(s3AccessKey, s3SecretKey),
+      s3ForcePathStyle: true,
+      signatureVersion: 'v4'
+    });
+}
 
 function listNext1000Objects(s3, bucketName, continuationToken) {
   const params = {
@@ -101,6 +118,7 @@ function updateObject({ s3, bucketName, key, metadata, contentType }) {
 }
 
 module.exports = {
+  createS3,
   listAllObjects,
   deleteObject,
   deleteAllObjects,

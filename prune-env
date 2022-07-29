@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 
 const s3Helper = require('./s3-helper');
+const { createS3 } = require('./s3-helper');
 const mongoHelper = require('./mongo-helper');
 const { ensureEnv } = require('./env-helper');
-const { S3, Credentials } = require('aws-sdk');
 const { MongoClient, ServerApiVersion } = require('mongodb');
 
 const getConfigFromParsingArguments = () => {
@@ -42,12 +42,7 @@ const getConfigFromParsingArguments = () => {
   await mongoHelper.dropAllCollections(db);
   await mongoClient.close();
 
-  const s3 = new S3({
-    apiVersion: '2006-03-01',
-    endpoint: pruneEnv.s3Endpoint,
-    region: pruneEnv.s3Region,
-    credentials: new Credentials(pruneEnv.s3AccessKey, pruneEnv.s3SecretKey)
-  });
+  const s3 = createS3(pruneEnv);
 
   await s3Helper.deleteAllObjects(s3, pruneEnv.s3BucketName);
 

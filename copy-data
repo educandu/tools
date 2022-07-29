@@ -6,7 +6,6 @@ const mongodump = require('./mongodump');
 const userHelper = require('./user-helper');
 const mongoHelper = require('./mongo-helper');
 const { ensureEnv } = require('./env-helper');
-const { S3, Credentials } = require('aws-sdk');
 const { MongoClient, ServerApiVersion } = require('mongodb');
 
 const OBJECT_COPY_CONCURRENCY = 10;
@@ -94,21 +93,8 @@ const canCopyDirectlyWithinS3 = (env1, env2) => {
     await mongoClient.close();
   }
 
-  const sourceS3 = new S3({
-    apiVersion: '2006-03-01',
-    endpoint: sourceEnv.s3Endpoint,
-    region: sourceEnv.s3Region,
-    credentials: new Credentials(sourceEnv.s3AccessKey, sourceEnv.s3SecretKey)
-  });
-
-  const destinationS3 = isSameS3Account
-    ? sourceS3
-    : new S3({
-      apiVersion: '2006-03-01',
-      endpoint: destinationEnv.s3Endpoint,
-      region: destinationEnv.s3Region,
-      credentials: new Credentials(destinationEnv.s3AccessKey, destinationEnv.s3SecretKey)
-    });
+  const sourceS3 = s3Helper.createS3(sourceEnv);
+  const destinationS3 = isSameS3Account ? sourceS3 : s3Helper.createS3(destinationEnv);
 
   console.log(`Deleting old objects from destination: ${destinationEnv.s3BucketName}`);
   const oldObjects = await s3Helper.listAllObjects(destinationS3, destinationEnv.s3BucketName);
