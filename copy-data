@@ -85,7 +85,7 @@ const canCopyDirectlyWithinS3 = (env1, env2) => {
     const updatedUsers = await userHelper.anonymizeUsers(users);
 
     for (const user of updatedUsers) {
-      console.log(`Updating anonymized user ${user.username}`);
+      console.log(`Updating anonymized user ${user.displayName}`);
       // eslint-disable-next-line no-await-in-loop
       await mongoHelper.upsertItemById(usersCollection, user);
     }
