@@ -9,7 +9,7 @@ const CONTAINER_DUMP_DIR = '/mongodump';
 
 function runCommand(cmd, args) {
   console.log([cmd, ...args].join(' '));
-  return execa(cmd, args, { stdio: 'inherit' });
+  return execa(cmd, args, { stdio: 'inherit', cwd: __dirname });
 }
 
 async function ensureMongoTools() {
