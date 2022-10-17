@@ -34,7 +34,7 @@ function listNext1000Objects(s3, bucketName, prefix, continuationToken) {
   });
 }
 
-async function listAllObjects(s3, bucketName, prefix) {
+async function listAllObjects({ s3, bucketName, prefix = null }) {
   let result = [];
   let continuationToken = null;
 
@@ -64,7 +64,7 @@ function deleteObject(s3, bucketName, key) {
 }
 
 async function deleteAllObjects(s3, bucketName) {
-  const oldObjects = await listAllObjects(s3, bucketName);
+  const oldObjects = await listAllObjects({ s3, bucketName });
   for (const obj of oldObjects) {
     console.log(`Deleting object ${obj.Key}`);
     // eslint-disable-next-line no-await-in-loop

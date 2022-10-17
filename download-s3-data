@@ -39,7 +39,7 @@ const getConfigFromParsingArguments = () => {
   const { sourceEnv } = getConfigFromParsingArguments();
 
   const sourceS3 = s3Helper.createS3(sourceEnv);
-  const sourceObjects = await s3Helper.listAllObjects(sourceS3, sourceEnv.s3BucketName, sourceEnv.s3ObjectsPrefix);
+  const sourceObjects = await s3Helper.listAllObjects({ s3: sourceS3, bucketName: sourceEnv.s3BucketName, prefix: sourceEnv.s3ObjectsPrefix });
 
   console.log(`Downloading ${sourceObjects.length} objects from ${sourceEnv.s3BucketName}/${sourceEnv.s3ObjectsPrefix}`);
 

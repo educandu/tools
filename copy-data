@@ -97,7 +97,7 @@ const canCopyDirectlyWithinS3 = (env1, env2) => {
   const destinationS3 = isSameS3Account ? sourceS3 : s3Helper.createS3(destinationEnv);
 
   console.log(`Deleting old objects from destination: ${destinationEnv.s3BucketName}`);
-  const oldObjects = await s3Helper.listAllObjects(destinationS3, destinationEnv.s3BucketName);
+  const oldObjects = await s3Helper.listAllObjects({ s3: destinationS3, bucketName: destinationEnv.s3BucketName });
   for (const obj of oldObjects) {
     console.log(`Deleting object ${obj.Key}`);
     // eslint-disable-next-line no-await-in-loop
@@ -105,7 +105,7 @@ const canCopyDirectlyWithinS3 = (env1, env2) => {
   }
 
   console.log(`Listing all objects from source: ${sourceEnv.s3BucketName}`);
-  const sourceObjects = await s3Helper.listAllObjects(sourceS3, sourceEnv.s3BucketName);
+  const sourceObjects = await s3Helper.listAllObjects({ s3: sourceS3, bucketName: sourceEnv.s3BucketName });
 
   console.log(`Copying ${sourceObjects.length} objects ${isSameS3Account ? 'within S3' : 'between S3 accounts'}  from ${sourceEnv.s3BucketName} to ${destinationEnv.s3BucketName}`);
 
