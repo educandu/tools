@@ -1,3 +1,4 @@
+const fs = require('fs');
 const { PassThrough } = require('stream');
 const { S3, Credentials } = require('aws-sdk');
 
@@ -17,25 +18,29 @@ function createS3({ s3Endpoint, s3Region, s3AccessKey, s3SecretKey }) {
     });
 }
 
-function listNext1000Objects(s3, bucketName, continuationToken) {
+function listNext1000Objects(s3, bucketName, prefix, continuationToken) {
   const params = {
     Bucket: bucketName,
     MaxKeys: 1000,
     ContinuationToken: continuationToken
   };
 
+  if (prefix) {
+    params.Prefix = prefix;
+  }
+
   return new Promise((resolve, reject) => {
     s3.listObjectsV2(params, (err, data) => err ? reject(err) : resolve(data));
   });
 }
 
-async function listAllObjects(s3, bucketName) {
+async function listAllObjects(s3, bucketName, prefix) {
   let result = [];
   let continuationToken = null;
 
   do {
     /* eslint-disable no-await-in-loop */
-    const currentResult = await listNext1000Objects(s3, bucketName, continuationToken);
+    const currentResult = await listNext1000Objects(s3, bucketName, prefix, continuationToken);
     if (currentResult.Contents.length) {
       result = result.concat(currentResult.Contents);
       continuationToken = currentResult.NextContinuationToken || null;
@@ -104,6 +109,19 @@ async function copyObjectBetweenDifferentS3Accounts({ sourceS3, destinationS3, s
   });
 }
 
+function downloadObject({ sourceS3, sourceBucketName, objectKey }, downDir) {
+  const stream = fs.createWriteStream(downDir);
+
+  return new Promise((resolve, reject) => {
+    sourceS3.getObject({
+      Bucket: sourceBucketName,
+      Key: objectKey
+    }, (err, data) => err ? reject(err) : resolve(data))
+      .createReadStream()
+      .pipe(stream);
+  });
+}
+
 function updateObject({ s3, bucketName, key, metadata, contentType }) {
   const params = {
     Bucket: bucketName,
@@ -124,5 +142,6 @@ module.exports = {
   deleteAllObjects,
   copyObjectWithinSameS3Account,
   copyObjectBetweenDifferentS3Accounts,
-  updateObject
+  updateObject,
+  downloadObject
 };
