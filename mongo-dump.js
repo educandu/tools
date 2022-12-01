@@ -1,15 +1,16 @@
-const del = require('del');
-const path = require('path');
-const execa = require('execa');
-const mkdirp = require('mkdirp');
-const { promisify } = require('util');
+import mkdirp from 'mkdirp';
+import path from 'node:path';
+import { execa } from 'execa';
+import { deleteAsync } from 'del';
+import { fileURLToPath } from 'node:url';
 
 let mongoToolBuilt = false;
 const CONTAINER_DUMP_DIR = '/mongodump';
+const packageDirname = path.dirname(fileURLToPath(new URL(import.meta.url).href));
 
 function runCommand(cmd, args) {
   console.log([cmd, ...args].join(' '));
-  return execa(cmd, args, { stdio: 'inherit', cwd: __dirname });
+  return execa(cmd, args, { stdio: 'inherit', cwd: packageDirname });
 }
 
 async function ensureMongoTools() {
@@ -26,7 +27,7 @@ async function getUserAndGroupId() {
   return { userId, groupId };
 }
 
-async function dump({ uri, directory, db }) {
+export async function dumpDb({ uri, directory, db }) {
   await ensureMongoTools();
 
   const { userId, groupId } = await getUserAndGroupId();
@@ -35,8 +36,8 @@ async function dump({ uri, directory, db }) {
   const localDumpDbDir = path.join(directory, db);
 
   console.log(`Purging directory ${localDumpDbDir}`);
-  await del(localDumpDbDir);
-  await promisify(mkdirp)(localDumpDbDir);
+  await deleteAsync(localDumpDbDir);
+  await mkdirp(localDumpDbDir);
 
   const args = [
     'run',
@@ -56,7 +57,7 @@ async function dump({ uri, directory, db }) {
   return runCommand('docker', args);
 }
 
-async function restore({ uri, directory, fromDb, toDb }) {
+export async function restoreDb({ uri, directory, fromDb, toDb }) {
   await ensureMongoTools();
 
   const { userId, groupId } = await getUserAndGroupId();
@@ -87,8 +88,3 @@ async function restore({ uri, directory, fromDb, toDb }) {
 
   return runCommand('docker', args);
 }
-
-module.exports = {
-  dump,
-  restore
-};

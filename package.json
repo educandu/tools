@@ -2,9 +2,9 @@
   "name": "tools",
   "version": "0.0.0",
   "description": "Tools for educandu development and maintenance",
-  "main": "src/index.js",
+  "type": "module",
   "engines": {
-    "node": "^16.13.1"
+    "node": "^18.0.0"
   },
   "keywords": [],
   "license": "MIT",
@@ -16,22 +16,22 @@
   },
   "private": true,
   "scripts": {
-    "lint": "eslint . copy-data dump-db --ext .js"
+    "lint": "eslint \"**/*.js\""
   },
   "dependencies": {
     "any-base": "~1.1.0",
     "async": "~3.2.4",
-    "aws-sdk": "~2.1133.0",
-    "bcrypt": "~5.0.1",
-    "chance": "~1.1.8",
-    "del": "~5.1.0",
-    "execa": "~2.0.4",
+    "aws-sdk": "~2.1265.0",
+    "bcrypt": "~5.1.0",
+    "chance": "~1.1.9",
+    "del": "~7.0.0",
+    "execa": "~6.1.0",
     "mime": "~3.0.0",
-    "mkdirp": "~0.5.1",
-    "mongodb": "~4.6.0",
-    "uuid": "~8.3.2"
+    "mkdirp": "~1.0.4",
+    "mongodb": "~4.12.1",
+    "uuid": "~9.0.0"
   },
   "devDependencies": {
-    "eslint": "~8.15.0"
+    "eslint": "~8.28.0"
   }
 }
