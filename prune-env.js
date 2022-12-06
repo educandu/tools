@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 import { ensureEnv } from './env-helper.js';
 import { dropAllCollections } from './mongo-helper.js';
 import { MongoClient, ServerApiVersion } from 'mongodb';
