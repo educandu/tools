@@ -4,7 +4,7 @@
   "description": "Tools for educandu development and maintenance",
   "type": "module",
   "engines": {
-    "node": "^18.0.0"
+    "node": "^18.12.1"
   },
   "keywords": [],
   "license": "MIT",
