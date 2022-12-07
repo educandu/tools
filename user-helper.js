@@ -1,16 +1,16 @@
-const Chance = require('chance');
-const bcrypt = require('bcrypt');
-const uniqueId = require('./unique-id');
+import Chance from 'chance';
+import bcrypt from 'bcrypt';
+import { createUniqueId } from './unique-id.js';
 
 const PASSWORD_SALT_ROUNDS = 1024;
 const chance = new Chance();
 
-async function anonymizeUsers(users) {
+export async function anonymizeUsers(users) {
   const anonymizedUsers = [];
   const consumedUserDataKeys = new Set();
 
   for (const user of users) {
-    const password = uniqueId.create();
+    const password = createUniqueId();
 
     let userData;
     let userDataKey;
@@ -39,7 +39,3 @@ async function anonymizeUsers(users) {
 
   return anonymizedUsers;
 }
-
-module.exports = {
-  anonymizeUsers
-};

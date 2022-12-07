@@ -1,18 +1,18 @@
-const fs = require('fs');
-const { PassThrough } = require('stream');
-const { S3, Credentials } = require('aws-sdk');
+import fs from 'node:fs';
+import aws from 'aws-sdk';
+import { PassThrough } from 'node:stream';
 
-function createS3({ s3Endpoint, s3Region, s3AccessKey, s3SecretKey }) {
+export function createS3({ s3Endpoint, s3Region, s3AccessKey, s3SecretKey }) {
   return s3Endpoint.includes('amazonaws')
-    ? new S3({
+    ? new aws.S3({
       apiVersion: '2006-03-01',
       endpoint: s3Endpoint,
       region: s3Region,
-      credentials: new Credentials(s3AccessKey, s3SecretKey)
+      credentials: new aws.Credentials(s3AccessKey, s3SecretKey)
     })
-    : new S3({
+    : new aws.S3({
       endpoint: s3Endpoint,
-      credentials: new Credentials(s3AccessKey, s3SecretKey),
+      credentials: new aws.Credentials(s3AccessKey, s3SecretKey),
       s3ForcePathStyle: true,
       signatureVersion: 'v4'
     });
@@ -34,7 +34,7 @@ function listNext1000Objects(s3, bucketName, prefix, continuationToken) {
   });
 }
 
-async function listAllObjects({ s3, bucketName, prefix = null }) {
+export async function listAllObjects({ s3, bucketName, prefix = null }) {
   let result = [];
   let continuationToken = null;
 
@@ -52,7 +52,7 @@ async function listAllObjects({ s3, bucketName, prefix = null }) {
   return result;
 }
 
-function deleteObject(s3, bucketName, key) {
+export function deleteObject(s3, bucketName, key) {
   const params = {
     Bucket: bucketName,
     Key: key
@@ -63,7 +63,7 @@ function deleteObject(s3, bucketName, key) {
   });
 }
 
-async function deleteAllObjects(s3, bucketName) {
+export async function deleteAllObjects(s3, bucketName) {
   const oldObjects = await listAllObjects({ s3, bucketName });
   for (const obj of oldObjects) {
     console.log(`Deleting object ${obj.Key}`);
@@ -78,7 +78,7 @@ function headObject({ s3, bucketName, objectKey }) {
   });
 }
 
-function copyObjectWithinSameS3Account({ s3, sourceBucketName, destinationBucketName, objectKey }) {
+export function copyObjectWithinSameS3Account({ s3, sourceBucketName, destinationBucketName, objectKey }) {
   return new Promise((resolve, reject) => {
     s3.copyObject({
       Bucket: destinationBucketName,
@@ -88,7 +88,7 @@ function copyObjectWithinSameS3Account({ s3, sourceBucketName, destinationBucket
   });
 }
 
-async function copyObjectBetweenDifferentS3Accounts({ sourceS3, destinationS3, sourceBucketName, destinationBucketName, objectKey }) {
+export async function copyObjectBetweenDifferentS3Accounts({ sourceS3, destinationS3, sourceBucketName, destinationBucketName, objectKey }) {
   const { ContentType: contentType, Metadata: metadata } = await headObject({ s3: sourceS3, bucketName: sourceBucketName, objectKey });
 
   return new Promise((resolve, reject) => {
@@ -109,7 +109,7 @@ async function copyObjectBetweenDifferentS3Accounts({ sourceS3, destinationS3, s
   });
 }
 
-function downloadObject({ sourceS3, sourceBucketName, objectKey }, downDir) {
+export function downloadObject({ sourceS3, sourceBucketName, objectKey }, downDir) {
   const stream = fs.createWriteStream(downDir);
 
   return new Promise((resolve, reject) => {
@@ -122,7 +122,7 @@ function downloadObject({ sourceS3, sourceBucketName, objectKey }, downDir) {
   });
 }
 
-function updateObject({ s3, bucketName, key, metadata, contentType }) {
+export function updateObject({ s3, bucketName, key, metadata, contentType }) {
   const params = {
     Bucket: bucketName,
     Key: key,
@@ -134,14 +134,3 @@ function updateObject({ s3, bucketName, key, metadata, contentType }) {
     s3.putObject(params, (err, s3Data) => err ? reject(err) : resolve(s3Data));
   });
 }
-
-module.exports = {
-  createS3,
-  listAllObjects,
-  deleteObject,
-  deleteAllObjects,
-  copyObjectWithinSameS3Account,
-  copyObjectBetweenDifferentS3Accounts,
-  updateObject,
-  downloadObject
-};
