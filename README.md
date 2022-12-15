@@ -1,6 +1,18 @@
 # tools
 
+[![codecov](https://codecov.io/gh/educandu/tools/branch/main/graph/badge.svg)](https://codecov.io/gh/educandu/tools)
+
 Tools for educandu development and maintenance.
+
+## Prerequisites
+
+* node.js ^18.0.0
+* Docker
+* optional: globally installed gulp: `npm i -g gulp-cli`
+
+This repository contains scripts for local usage, it does not create any build output.
+
+## Available scripts
 
 1. `copy-data`
   Drops all destination data (mongoDB and S3) and replaces it with the source data.

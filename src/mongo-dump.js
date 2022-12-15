@@ -16,7 +16,6 @@ function runCommand(cmd, args) {
 async function ensureMongoTools() {
   if (!mongoToolBuilt) {
     await runCommand('docker', ['build', '-t', 'mongotools', '.']);
-    /* eslint-disable require-atomic-updates */
     mongoToolBuilt = true;
   }
 }

@@ -91,7 +91,6 @@ const canCopyDirectlyWithinS3 = (env1, env2) => {
 
     for (const user of updatedUsers) {
       console.log(`Updating anonymized user ${user.displayName}`);
-      // eslint-disable-next-line no-await-in-loop
       await upsertItemById(usersCollection, user);
     }
 
@@ -105,7 +104,6 @@ const canCopyDirectlyWithinS3 = (env1, env2) => {
   const oldObjects = await listAllObjects({ s3: destinationS3, bucketName: destinationEnv.s3BucketName });
   for (const obj of oldObjects) {
     console.log(`Deleting object ${obj.Key}`);
-    // eslint-disable-next-line no-await-in-loop
     await deleteObject(destinationS3, destinationEnv.s3BucketName, obj.Key);
   }
 
