@@ -29,7 +29,6 @@ export async function anonymizeUsers(users) {
     anonymizedUsers.push({
       ...user,
       displayName: `${userData.first}${userData.last}${userData.random}`,
-      // eslint-disable-next-line no-await-in-loop
       passwordHash: await bcrypt.hash(password, PASSWORD_SALT_ROUNDS),
       email: `${userData.first}${userData.last}${userData.random}@test.com`,
       organization: chance.company(),

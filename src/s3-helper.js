@@ -39,7 +39,6 @@ export async function listAllObjects({ s3, bucketName, prefix = null }) {
   let continuationToken = null;
 
   do {
-    /* eslint-disable no-await-in-loop */
     const currentResult = await listNext1000Objects(s3, bucketName, prefix, continuationToken);
     if (currentResult.Contents.length) {
       result = result.concat(currentResult.Contents);
@@ -67,7 +66,6 @@ export async function deleteAllObjects(s3, bucketName) {
   const oldObjects = await listAllObjects({ s3, bucketName });
   for (const obj of oldObjects) {
     console.log(`Deleting object ${obj.Key}`);
-    // eslint-disable-next-line no-await-in-loop
     await deleteObject(s3, bucketName, obj.Key);
   }
 }

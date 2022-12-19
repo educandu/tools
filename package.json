@@ -1,12 +1,15 @@
 {
-  "name": "tools",
+  "name": "@educandu/tools",
   "version": "0.0.0",
   "description": "Tools for educandu development and maintenance",
   "type": "module",
+  "private": true,
   "engines": {
-    "node": "^18.12.1"
+    "node": "^18.0.0"
   },
-  "keywords": [],
+  "keywords": [
+    "educandu"
+  ],
   "license": "MIT",
   "author": "Educandu Team <team@educandu.dev>",
   "homepage": "https://github.com/educandu/tools",
@@ -14,14 +17,10 @@
     "type": "git",
     "url": "https://github.com/educandu/tools"
   },
-  "private": true,
-  "scripts": {
-    "lint": "eslint \"**/*.js\""
-  },
   "dependencies": {
     "any-base": "~1.1.0",
     "async": "~3.2.4",
-    "aws-sdk": "~2.1265.0",
+    "aws-sdk": "~2.1277.0",
     "bcrypt": "~5.1.0",
     "chance": "~1.1.9",
     "del": "~7.0.0",
@@ -32,6 +31,15 @@
     "uuid": "~9.0.0"
   },
   "devDependencies": {
-    "eslint": "~8.28.0"
+    "@educandu/dev-tools": "~6.0.0",
+    "@educandu/eslint-config": "~1.0.2",
+    "@vitest/coverage-c8": "~0.25.8",
+    "del": "^7.0.0",
+    "eslint": "~8.30.0",
+    "eslint-plugin-import": "~2.26.0",
+    "eslint-plugin-react": "~7.31.11",
+    "eslint-plugin-react-hooks": "~4.6.0",
+    "gulp": "~4.0.2",
+    "vitest": "~0.25.8"
   }
 }
