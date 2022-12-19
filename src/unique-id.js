@@ -1,9 +1,12 @@
-import anyBase from 'any-base';
-import { v4 as uuidv4 } from 'uuid';
+import { customAlphabet } from 'nanoid';
 
-const flickrBase58 = '123456789abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ';
-const hexToFlickrBase58 = anyBase(anyBase.HEX, flickrBase58);
+const alphabet = '123456789abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ';
+const nanoid = customAlphabet(alphabet, 22);
 
-export function createUniqueId() {
-  return hexToFlickrBase58(uuidv4().replace(/-/g, ''));
+function create() {
+  return nanoid();
 }
+
+export default {
+  create
+};
