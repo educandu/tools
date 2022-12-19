@@ -1,6 +1,6 @@
 import Chance from 'chance';
 import bcrypt from 'bcrypt';
-import { createUniqueId } from './unique-id.js';
+import uniqueId from './unique-id.js';
 
 const PASSWORD_SALT_ROUNDS = 1024;
 const chance = new Chance();
@@ -10,7 +10,7 @@ export async function anonymizeUsers(users) {
   const consumedUserDataKeys = new Set();
 
   for (const user of users) {
-    const password = createUniqueId();
+    const password = uniqueId.create();
 
     let userData;
     let userDataKey;
