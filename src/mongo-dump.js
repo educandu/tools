@@ -15,7 +15,7 @@ function runCommand(cmd, args) {
 
 async function ensureMongoTools() {
   if (!mongoToolBuilt) {
-    await runCommand('docker', ['build', '-t', 'mongotools', '.']);
+    await runCommand('docker', ['build', '-t', 'mongotools', '.', '-f', '../Dockerfile']);
     mongoToolBuilt = true;
   }
 }
