@@ -6,16 +6,17 @@ import { fileURLToPath } from 'node:url';
 
 let mongoToolBuilt = false;
 const CONTAINER_DUMP_DIR = '/mongodump';
-const packageDirname = path.dirname(fileURLToPath(new URL(import.meta.url).href));
+const packageDirName = path.dirname(fileURLToPath(import.meta.url));
+const packageParentDirName = path.dirname(packageDirName);
 
 function runCommand(cmd, args) {
   console.log([cmd, ...args].join(' '));
-  return execa(cmd, args, { stdio: 'inherit', cwd: packageDirname });
+  return execa(cmd, args, { stdio: 'inherit', cwd: packageParentDirName });
 }
 
 async function ensureMongoTools() {
   if (!mongoToolBuilt) {
-    await runCommand('docker', ['build', '-t', 'mongotools', '.', '-f', '../Dockerfile']);
+    await runCommand('docker', ['build', '-t', 'mongotools', '.']);
     mongoToolBuilt = true;
   }
 }
