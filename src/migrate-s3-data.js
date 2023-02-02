@@ -29,7 +29,7 @@ const getConfigFromParsingArguments = () => {
   const onEnv = args[on + 1];
 
   if (onEnv === -1 || !onEnv) {
-    throw new Error('Expected arguments: -env \'environment\'');
+    throw new Error('Expected arguments: -on \'environment\'');
   }
 
   const envConfig = ensureConfigForEnv(onEnv);
