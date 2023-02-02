@@ -4,7 +4,7 @@ import {
   createS3,
   deleteObject,
   listAllObjects,
-  copyObjectWithinSameBucket,
+  copyObjectWithinSameBucket
 } from './s3-helper.js';
 
 const OBJECT_MIGRATION_CONCURRENCY = 10;
@@ -28,7 +28,7 @@ const getConfigFromParsingArguments = () => {
   const on = args.indexOf('-on');
   const onEnv = args[on + 1];
 
-  if (onEnv === -1 || !onEnv ) {
+  if (onEnv === -1 || !onEnv) {
     throw new Error('Expected arguments: -env \'environment\'');
   }
 
@@ -72,10 +72,10 @@ const getNewObjectKey = obj => {
 
   const migrateObject = (obj, newObjectKey) => {
     return copyObjectWithinSameBucket({
-      sourceS3: sourceS3,
+      sourceS3,
       sourceBucketName: sourceEnv.s3BucketName,
       objectKey: obj.Key,
-      newObjectKey: newObjectKey,
+      newObjectKey
     });
   };
 

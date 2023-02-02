@@ -115,7 +115,7 @@ export async function copyObjectWithinSameBucket({ sourceS3, sourceBucketName, o
   const { ContentType: contentType, Metadata: metadata } = await headObject({
     s3: sourceS3,
     bucketName: sourceBucketName,
-    objectKey: objectKey
+    objectKey
   });
 
   return new Promise((resolve, reject) => {
