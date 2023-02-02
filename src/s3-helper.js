@@ -111,7 +111,7 @@ export async function copyObjectBetweenDifferentS3Accounts({ sourceS3, destinati
   });
 }
 
-export async function changeObjectKey({ sourceS3, sourceBucketName, objectKey, newObjectKey }) {
+export async function copyObjectWithinSameBucket({ sourceS3, sourceBucketName, objectKey, newObjectKey }) {
   const { ContentType: contentType, Metadata: metadata } = await headObject({
     s3: sourceS3,
     bucketName: sourceBucketName,

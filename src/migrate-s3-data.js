@@ -4,7 +4,7 @@ import {
   createS3,
   deleteObject,
   listAllObjects,
-  changeObjectKey,
+  copyObjectWithinSameBucket,
 } from './s3-helper.js';
 
 const OBJECT_MIGRATION_CONCURRENCY = 10;
@@ -71,7 +71,7 @@ const getNewObjectKey = obj => {
   let errorOccurred = false;
 
   const migrateObject = (obj, newObjectKey) => {
-    return changeObjectKey({
+    return copyObjectWithinSameBucket({
       sourceS3: sourceS3,
       sourceBucketName: sourceEnv.s3BucketName,
       objectKey: obj.Key,
