@@ -87,7 +87,11 @@ export function copyObjectWithinSameS3Account({ s3, sourceBucketName, destinatio
 }
 
 export async function copyObjectBetweenDifferentS3Accounts({ sourceS3, destinationS3, sourceBucketName, destinationBucketName, objectKey }) {
-  const { ContentType: contentType, Metadata: metadata } = await headObject({ s3: sourceS3, bucketName: sourceBucketName, objectKey });
+  const { ContentType: contentType, Metadata: metadata } = await headObject({
+    s3: sourceS3,
+    bucketName: sourceBucketName,
+    objectKey
+  });
 
   return new Promise((resolve, reject) => {
     const stream = new PassThrough();
@@ -95,6 +99,31 @@ export async function copyObjectBetweenDifferentS3Accounts({ sourceS3, destinati
     destinationS3.upload({
       Bucket: destinationBucketName,
       Key: objectKey,
+      Body: stream,
+      Metadata: metadata,
+      ContentType: contentType
+    }, (err, data) => err ? reject(err) : resolve(data));
+
+    sourceS3.getObject({
+      Bucket: sourceBucketName,
+      Key: objectKey
+    }).createReadStream().pipe(stream);
+  });
+}
+
+export async function changeObjectKey({ sourceS3, sourceBucketName, objectKey, newObjectKey }) {
+  const { ContentType: contentType, Metadata: metadata } = await headObject({
+    s3: sourceS3,
+    bucketName: sourceBucketName,
+    objectKey: objectKey
+  });
+
+  return new Promise((resolve, reject) => {
+    const stream = new PassThrough();
+
+    sourceS3.upload({
+      Bucket: sourceBucketName,
+      Key: newObjectKey,
       Body: stream,
       Metadata: metadata,
       ContentType: contentType
