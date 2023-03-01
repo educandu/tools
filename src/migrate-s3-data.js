@@ -5,7 +5,7 @@ import { ensureEnv } from './env-helper.js';
 import { MongoClient, ServerApiVersion } from 'mongodb';
 import { createS3, deleteObject, listAllObjects, copyObjectWithinSameBucket } from './s3-helper.js';
 
-const OBJECT_MIGRATION_CONCURRENCY = 10;
+const OBJECT_MIGRATION_CONCURRENCY = 20;
 
 const CDN_DOCUMENT_MEDIA_REGEX = /document-media\/(.+)\//;
 const CDN_MEDIA_LIBRARY_PREFIX = 'media-library/';
@@ -189,10 +189,10 @@ const getResourceTags = ({ fileName, documentId }) => {
     console.log(`Migrated '${obj.Key}' to '${newObjectKey}' and created media library item '${newMediaLibraryItem._id}'`);
   };
 
-  const q = queue(({ obj }, callback) => {
+  const q = queue(async ({ obj }, callback) => {
     const newObjectKey = getNewObjectKey(obj);
     if (newObjectKey) {
-      migrateObject(obj, newObjectKey).then(() => callback?.(), err => callback?.(err));
+      await migrateObject(obj, newObjectKey).then(() => callback?.(), err => callback?.(err));
     }
   }, OBJECT_MIGRATION_CONCURRENCY);
 
