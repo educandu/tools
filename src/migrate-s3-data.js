@@ -118,7 +118,9 @@ const getResourceTags = ({ fileName, documentId }) => {
   const sanitizedTags = baseName
     .toLowerCase()
     .split('-')
-    .map(tag => tag.replaceAll(' ', ''))
+    .reduce((accu, part) => [...accu, ...part.split(' ')], [])
+    .reduce((accu, part) => [...accu, ...part.split('_')], [])
+    .map(part => part.trim())
     .filter(tag => tag.length > 2)
     // drop generated file ID
     .slice(0, -1);
