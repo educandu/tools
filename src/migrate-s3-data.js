@@ -10,7 +10,7 @@ const OBJECT_MIGRATION_CONCURRENCY = 20;
 const CDN_DOCUMENT_MEDIA_REGEX = /document-media\/(.+)\//;
 const CDN_MEDIA_LIBRARY_PREFIX = 'media-library/';
 
-const LICENCE = 'CC0-1.0';
+const LICENCE = 'CC-BY-SA-4.0';
 const DEFAULT_TAG = 'generic';
 const DEFAULT_CONTENT_TYPE = 'application/octet-stream';
 
