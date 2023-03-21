@@ -50,6 +50,7 @@ const getConfigFromParsingArguments = () => {
   return {
     sourceEnv: fromConfig,
     destinationEnv: toConfig,
+    shouldCopyDbOnly: args.includes('-dbonly'),
     shouldAnonymizeUsers: args.includes('-anonymize')
   };
 };
@@ -63,7 +64,7 @@ const canCopyDirectlyWithinS3 = (env1, env2) => {
 
 (async () => {
 
-  const { sourceEnv, destinationEnv, shouldAnonymizeUsers } = getConfigFromParsingArguments();
+  const { sourceEnv, destinationEnv, shouldCopyDbOnly, shouldAnonymizeUsers } = getConfigFromParsingArguments();
   const isSameS3Account = canCopyDirectlyWithinS3(sourceEnv, destinationEnv);
 
   console.log(`Copying from\n${JSON.stringify(sourceEnv)}\nto\n${JSON.stringify(destinationEnv)}`);
@@ -95,6 +96,11 @@ const canCopyDirectlyWithinS3 = (env1, env2) => {
     }
 
     await mongoClient.close();
+  }
+
+  if (shouldCopyDbOnly) {
+    console.log('SUCESSFULLY FINISHED!');
+    return;
   }
 
   const sourceS3 = createS3(sourceEnv);
