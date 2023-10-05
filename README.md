@@ -21,17 +21,21 @@ This repository contains scripts for local usage, it does not create any build o
   Creates a mongodump of the MongoDb database locally in `./dump/<nameOfDatabase>`
 3. `prune-env`
   Drops all data (mongoDB and S3) from the specified environment
+4. `migrate-s3-data`
+  Converts all former document media files from the CDN into medial library items
+5. `migrate-room-media`
+  Creates a corresponding room media item entry in MOngoDB for each room media file on the CDN
 
 ## Environment variables
 
 | Variable | Description | Required by tools |
 | --- | --- | --- |
-| S3_ENDPOINT_[ENV] | The S3 entrypoint for ENV <br />(e.g. 'https://s3.eu-central-1.amazonaws.com') | `copy-data`<br />`prune-env` |
-| S3_REGION_[ENV] | The S3 region for ENV  <br />(e.g. 'eu-central-1') | `copy-data`<br />`prune-env` |
-| S3_ACCESS_KEY_[ENV] | The S3 access key of the auth credentials for ENV | `copy-data`<br />`prune-env` |
-| S3_SECRET_KEY_[ENV] | The S3 secret key of the auth credentials for ENV | `copy-data`<br />`prune-env` |
-| S3_BUCKET_NAME_[ENV] | S3 bucket name for ENV | `copy-data`<br />`dump-db`<br />`prune-env` |
-| DB_URI_[ENV] | MongoDB URI for ENV.  <br />(e.g. format: `mongodb+srv://[user]:[pass]@[host]/[name]`) | `copy-data`<br />`dump-db`<br />`prune-env` |
+| S3_ENDPOINT_[ENV] | The S3 entrypoint for ENV <br />(e.g. 'https://s3.eu-central-1.amazonaws.com') | `copy-data`<br />`prune-env`<br />`migrate-s3-data`<br />`migrate-room-media` |
+| S3_REGION_[ENV] | The S3 region for ENV  <br />(e.g. 'eu-central-1') | `copy-data`<br />`prune-env`<br />`migrate-s3-data`<br />`migrate-room-media` |
+| S3_ACCESS_KEY_[ENV] | The S3 access key of the auth credentials for ENV | `copy-data`<br />`prune-env`<br />`migrate-s3-data`<br />`migrate-room-media` |
+| S3_SECRET_KEY_[ENV] | The S3 secret key of the auth credentials for ENV | `copy-data`<br />`prune-env`<br />`migrate-s3-data`<br />`migrate-room-media` |
+| S3_BUCKET_NAME_[ENV] | S3 bucket name for ENV | `copy-data`<br />`dump-db`<br />`prune-env`<br />`migrate-s3-data`<br />`migrate-room-media` |
+| DB_URI_[ENV] | MongoDB URI for ENV.  <br />(e.g. format: `mongodb+srv://[user]:[pass]@[host]/[name]`) | `copy-data`<br />`dump-db`<br />`prune-env`<br />`migrate-s3-data`<br />`migrate-room-media` |
 | DB_NAME_[ENV] | MongoDB database name for ENV | `copy-data`<br />`dump-db`<br />`prune-env` |
 
 ## Usage
@@ -84,7 +88,37 @@ $ export S3_SECRET_KEY_INT='DFLJKDSDFDS8FDF7DS/DSFLKFJDSLKFDJDJLF8+e'
 $ export S3_BUCKET_NAME_INT='int.bucket.name'
 ```
 
-`$ ./prune-env -env INT`
+`$ ./prune-env -on INT`
+
+### Running `migrate-s3-data`
+
+Example for migrating data on integration:
+
+```
+$ export DB_URI_INT='mongodb+srv://user:fjdshf87dsV@int.mongodb.net/name'
+$ export S3_ENDPOINT_INT='https://s3.eu-central-1.amazonaws.com'
+$ export S3_REGION_INT='eu-central-1'
+$ export S3_ACCESS_KEY_INT='DSJHFDKSJFHERWUFRUKRF'
+$ export S3_SECRET_KEY_INT='DFLJKDSDFDS8FDF7DS/DSFLKFJDSLKFDJDJLF8+e'
+$ export S3_BUCKET_NAME_INT='int.bucket.name'
+```
+
+`$ ./migrate-s3-data -on INT`
+
+### Running `migrate-room-media`
+
+Example for migrating data on integration:
+
+```
+$ export DB_URI_INT='mongodb+srv://user:fjdshf87dsV@int.mongodb.net/name'
+$ export S3_ENDPOINT_INT='https://s3.eu-central-1.amazonaws.com'
+$ export S3_REGION_INT='eu-central-1'
+$ export S3_ACCESS_KEY_INT='DSJHFDKSJFHERWUFRUKRF'
+$ export S3_SECRET_KEY_INT='DFLJKDSDFDS8FDF7DS/DSFLKFJDSLKFDJDJLF8+e'
+$ export S3_BUCKET_NAME_INT='int.bucket.name'
+```
+
+`$ ./migrate-room-media -on INT`
 
 ---
 

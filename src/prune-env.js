@@ -5,14 +5,14 @@ import { createS3, deleteAllObjects } from './s3-helper.js';
 
 const getConfigFromParsingArguments = () => {
   const args = process.argv;
-  const envFlag = args.indexOf('-env');
-  const env = args[envFlag + 1];
+  const on = args.indexOf('-on');
+  const onEnv = args[on + 1];
 
-  if (envFlag === -1 || !env) {
-    throw new Error('Expected arguments: -env \'environment\'');
+  if (on === -1 || !onEnv) {
+    throw new Error('Expected arguments: -on \'environment\'');
   }
 
-  const sanitizedEnv = (env || '').trim().toUpperCase();
+  const sanitizedEnv = onEnv.trim().toUpperCase();
 
   return {
     pruneEnv: {
