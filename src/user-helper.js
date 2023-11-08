@@ -31,7 +31,8 @@ export async function anonymizeUsers(users) {
       displayName: `${userData.first}${userData.last}${userData.random}`,
       passwordHash: await bcrypt.hash(password, PASSWORD_SALT_ROUNDS),
       email: `${userData.first}${userData.last}${userData.random}@test.com`,
-      organization: chance.company()
+      organization: chance.company(),
+      shortDescription: chance.paragraph({ sentences: 5 })
     });
   }
 

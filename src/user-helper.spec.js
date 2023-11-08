@@ -14,7 +14,7 @@ describe('user-helper', () => {
         passwordHash: '39tcmpgq93gp9wa4mztcwo8hfcsz83zrcamheig',
         email: 'johndoe@gmail.com',
         organization: 'Doe Ltd.',
-        introduction: 'Hi, I am John!'
+        shortDescription: 'Hi, I am John!'
       };
 
       [anonymizedUser] = await anonymizeUsers([originalUser]);
@@ -39,6 +39,11 @@ describe('user-helper', () => {
     it('anonymizes the `organization`', () => {
       expect(anonymizedUser.organization).not.toBe(originalUser.organization);
     });
+
+    it('anonymizes the `shortDescription`', () => {
+      expect(anonymizedUser.shortDescription).not.toBe(originalUser.shortDescription);
+    });
+
   });
 
 });
