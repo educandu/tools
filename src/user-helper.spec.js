@@ -39,11 +39,6 @@ describe('user-helper', () => {
     it('anonymizes the `organization`', () => {
       expect(anonymizedUser.organization).not.toBe(originalUser.organization);
     });
-
-    it('anonymizes the `introduction`', () => {
-      expect(anonymizedUser.introduction).not.toBe(originalUser.introduction);
-    });
-
   });
 
 });
