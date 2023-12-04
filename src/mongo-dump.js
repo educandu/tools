@@ -1,6 +1,6 @@
-import mkdirp from 'mkdirp';
 import path from 'node:path';
 import { execa } from 'execa';
+import { mkdirp } from 'mkdirp';
 import { deleteAsync } from 'del';
 import { fileURLToPath } from 'node:url';
 
