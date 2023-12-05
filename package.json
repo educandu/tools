@@ -18,8 +18,9 @@
     "url": "https://github.com/educandu/tools"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "~3.465.0",
+    "@aws-sdk/lib-storage": "~3.465.0",
     "async": "~3.2.5",
-    "aws-sdk": "~2.1510.0",
     "bcrypt": "~5.1.1",
     "chance": "~1.1.11",
     "del": "~7.1.0",
