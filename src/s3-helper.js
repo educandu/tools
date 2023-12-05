@@ -1,28 +1,34 @@
-import fs from 'node:fs';
-import aws from 'aws-sdk';
+import { S3 } from '@aws-sdk/client-s3';
 import promiseRetry from 'promise-retry';
 import { PassThrough } from 'node:stream';
+import { Upload } from '@aws-sdk/lib-storage';
 
-function createPromiseWithRetry(promiseFunc, description = '', maxRetries = 5) {
+function retryPromise(func, description = '', maxRetries = 5) {
   return promiseRetry((retry, attempt) => {
     if (attempt > 1 && description) {
       console.warn(`[${attempt}/${maxRetries}] ${description}`);
     }
-    return new Promise(promiseFunc).catch(retry);
+    return func().catch(retry);
   }, { retries: maxRetries });
 }
 
 export function createS3({ s3Endpoint, s3Region, s3AccessKey, s3SecretKey }) {
+  const credentials = {
+    accessKeyId: s3AccessKey,
+    secretAccessKey: s3SecretKey
+  };
+
   return s3Endpoint.includes('amazonaws')
-    ? new aws.S3({
+    ? new S3({
       apiVersion: '2006-03-01',
       endpoint: s3Endpoint,
       region: s3Region,
-      credentials: new aws.Credentials(s3AccessKey, s3SecretKey)
+      credentials
     })
-    : new aws.S3({
+    : new S3({
       endpoint: s3Endpoint,
-      credentials: new aws.Credentials(s3AccessKey, s3SecretKey),
+      region: s3Region,
+      credentials,
       s3ForcePathStyle: true,
       signatureVersion: 'v4'
     });
@@ -39,8 +45,8 @@ function listNext1000Objects(s3, bucketName, prefix, continuationToken) {
     params.Prefix = prefix;
   }
 
-  return createPromiseWithRetry((resolve, reject) => {
-    s3.listObjectsV2(params, (err, data) => err ? reject(err) : resolve(data));
+  return retryPromise(() => {
+    return s3.listObjectsV2(params);
   }, `LIST prefix='${prefix}' continuationToken='${continuationToken}'`);
 }
 
@@ -50,7 +56,7 @@ export async function listAllObjects({ s3, bucketName, prefix = null }) {
 
   do {
     const currentResult = await listNext1000Objects(s3, bucketName, prefix, continuationToken);
-    if (currentResult.Contents.length) {
+    if (currentResult.Contents?.length) {
       result = result.concat(currentResult.Contents);
       continuationToken = currentResult.NextContinuationToken || null;
     } else {
@@ -67,8 +73,8 @@ export function deleteObject(s3, bucketName, objectKey) {
     Key: objectKey
   };
 
-  return createPromiseWithRetry((resolve, reject) => {
-    s3.deleteObject(params, (err, data) => err ? reject(err) : resolve(data));
+  return retryPromise(() => {
+    return s3.deleteObject(params);
   }, `DELETE ${objectKey}`);
 }
 
@@ -80,18 +86,18 @@ export async function deleteAllObjects(s3, bucketName) {
 }
 
 function headObject({ s3, bucketName, objectKey }) {
-  return createPromiseWithRetry((resolve, reject) => {
-    s3.headObject({ Bucket: bucketName, Key: objectKey }, (err, data) => err ? reject(err) : resolve(data));
+  return retryPromise(() => {
+    return s3.headObject({ Bucket: bucketName, Key: objectKey });
   }, `HEAD ${objectKey}`);
 }
 
 export function copyObjectWithinSameS3Account({ s3, sourceBucketName, destinationBucketName, objectKey }) {
-  return createPromiseWithRetry((resolve, reject) => {
-    s3.copyObject({
+  return retryPromise(() => {
+    return s3.copyObject({
       Bucket: destinationBucketName,
       CopySource: `/${sourceBucketName}/${encodeURIComponent(objectKey)}`,
       Key: objectKey
-    }, (err, data) => err ? reject(err) : resolve(data));
+    });
   }, `COPY ${objectKey}`);
 }
 
@@ -102,71 +108,29 @@ export async function copyObjectBetweenDifferentS3Accounts({ sourceS3, destinati
     objectKey
   });
 
-  return createPromiseWithRetry((resolve, reject) => {
+  return retryPromise(async () => {
     const stream = new PassThrough();
 
-    destinationS3.upload({
-      Bucket: destinationBucketName,
-      Key: objectKey,
-      Body: stream,
-      Metadata: metadata,
-      ContentType: contentType
-    }, (err, data) => err ? reject(err) : resolve(data));
+    const upload = new Upload({
+      client: destinationS3,
+      params: {
+        Bucket: destinationBucketName,
+        Key: objectKey,
+        Body: stream,
+        Metadata: metadata,
+        ContentType: contentType
+      },
+      queueSize: 1,
+      partSize: 10 * 1024 * 1024,
+      leavePartsOnError: false
+    });
 
-    sourceS3.getObject({
+    const res = await sourceS3.getObject({
       Bucket: sourceBucketName,
       Key: objectKey
-    }).createReadStream().pipe(stream);
+    });
+
+    res.Body.pipe(stream);
+    return upload.done();
   }, `COPY ${objectKey}`);
-}
-
-export async function copyObjectWithinSameBucket({ sourceS3, sourceBucketName, objectKey, newObjectKey }) {
-  const { ContentType: contentType, Metadata: metadata } = await headObject({
-    s3: sourceS3,
-    bucketName: sourceBucketName,
-    objectKey
-  });
-
-  return createPromiseWithRetry((resolve, reject) => {
-    const stream = new PassThrough();
-
-    sourceS3.upload({
-      Bucket: sourceBucketName,
-      Key: newObjectKey,
-      Body: stream,
-      Metadata: metadata,
-      ContentType: contentType
-    }, (err, data) => err ? reject(err) : resolve(data));
-
-    sourceS3.getObject({
-      Bucket: sourceBucketName,
-      Key: objectKey
-    }).createReadStream().pipe(stream);
-  }, `COPY ${objectKey} -> ${newObjectKey}`);
-}
-
-export function downloadObject({ sourceS3, sourceBucketName, objectKey }, downDir) {
-  const stream = fs.createWriteStream(downDir);
-
-  return createPromiseWithRetry((resolve, reject) => {
-    sourceS3.getObject({
-      Bucket: sourceBucketName,
-      Key: objectKey
-    }, (err, data) => err ? reject(err) : resolve(data))
-      .createReadStream()
-      .pipe(stream);
-  }, `DOWNLOAD ${objectKey}`);
-}
-
-export function updateObject({ s3, bucketName, key, metadata, contentType }) {
-  const params = {
-    Bucket: bucketName,
-    Key: key,
-    Metadata: metadata,
-    ContentType: contentType
-  };
-
-  return createPromiseWithRetry((resolve, reject) => {
-    s3.putObject(params, (err, s3Data) => err ? reject(err) : resolve(s3Data));
-  });
 }
