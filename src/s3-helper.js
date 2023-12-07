@@ -1,7 +1,7 @@
-import { S3 } from '@aws-sdk/client-s3';
 import promiseRetry from 'promise-retry';
 import { PassThrough } from 'node:stream';
 import { Upload } from '@aws-sdk/lib-storage';
+import { S3Client } from '@aws-sdk/client-s3';
 
 function retryPromise(func, description = '', maxRetries = 5) {
   return promiseRetry((retry, attempt) => {
@@ -19,17 +19,17 @@ export function createS3({ s3Endpoint, s3Region, s3AccessKey, s3SecretKey }) {
   };
 
   return s3Endpoint.includes('amazonaws')
-    ? new S3({
+    ? new S3Client({
       apiVersion: '2006-03-01',
       endpoint: s3Endpoint,
       region: s3Region,
       credentials
     })
-    : new S3({
+    : new S3Client({
       endpoint: s3Endpoint,
       region: s3Region,
       credentials,
-      s3ForcePathStyle: true,
+      forcePathStyle: true,
       signatureVersion: 'v4'
     });
 }
