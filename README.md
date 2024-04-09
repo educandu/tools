@@ -16,7 +16,7 @@ This repository contains scripts for local usage, it does not create any build o
 
 1. `copy-data`
   Drops all destination data (mongoDB and S3) and replaces it with the source data.
-  Anonymizes all sensitive user information, replacing it with mock data.
+  Optionally anonymizes all sensitive user information, replacing it with mock data.
 2. `dump-db`
   Creates a mongodump of the MongoDb database locally in `./dump/<nameOfDatabase>`
 3. `prune-env`
@@ -57,9 +57,10 @@ $ export S3_SECRET_KEY_STAG='DFLJKDSDFDS8FDF7DS/DSFLKFJDSLKFDJDJLF8+e'
 $ export S3_BUCKET_NAME_STAG='stag.bucket.name'
 ```
 
-`$ ./copy-data -from STAG -to INT -anonymize`
+`$ ./copy-data -from STAG -to INT -anonymize -skiplarge`
 
-The `-anonymize` flag is optional and setting it will anonymize all users in the DB
+The `-anonymize` flag is optional and setting it will anonymize all users in the DB.
+The `-skiplarge` flag is optional and setting it will skip copying CDN data larger than 2000 bytes.
 
 ### Running `dump-db`
 
