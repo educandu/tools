@@ -14,6 +14,7 @@ import {
 } from './s3-helper.js';
 
 const OBJECT_COPY_CONCURRENCY = 10;
+const LARGE_OBJECT_THRESHOLD_IN_BYTES = 2000;
 
 const dumpDir = path.resolve('./dump');
 
@@ -51,7 +52,8 @@ const getConfigFromParsingArguments = () => {
     sourceEnv: fromConfig,
     destinationEnv: toConfig,
     shouldCopyDbOnly: args.includes('-dbonly'),
-    shouldAnonymizeUsers: args.includes('-anonymize')
+    shouldAnonymizeUsers: args.includes('-anonymize'),
+    shouldSkipLargeObjects: args.includes('-skiplarge')
   };
 };
 
@@ -64,7 +66,7 @@ const canCopyDirectlyWithinS3 = (env1, env2) => {
 
 (async () => {
 
-  const { sourceEnv, destinationEnv, shouldCopyDbOnly, shouldAnonymizeUsers } = getConfigFromParsingArguments();
+  const { sourceEnv, destinationEnv, shouldCopyDbOnly, shouldAnonymizeUsers, shouldSkipLargeObjects } = getConfigFromParsingArguments();
   const isSameS3Account = canCopyDirectlyWithinS3(sourceEnv, destinationEnv);
 
   console.log(`Copying from\n${JSON.stringify(sourceEnv)}\nto\n${JSON.stringify(destinationEnv)}`);
@@ -135,8 +137,14 @@ const canCopyDirectlyWithinS3 = (env1, env2) => {
     });
 
   const q = queue(({ obj, index }, callback) => {
-    console.log(`[${percentageFormatter.format((index + 1) / sourceObjects.length)}] Copying object ${obj.Key}`);
-    copyObject(obj).then(() => callback?.(), err => callback?.(err));
+    const percentage = percentageFormatter.format((index + 1) / sourceObjects.length);
+    if (shouldSkipLargeObjects && obj.Size > LARGE_OBJECT_THRESHOLD_IN_BYTES) {
+      console.log(`[${percentage}] SKIP object ${obj.Key}`);
+      Promise.resolve().then(() => callback?.());
+    } else {
+      console.log(`[${percentage}] COPY object ${obj.Key}`);
+      copyObject(obj).then(() => callback?.(), err => callback?.(err));
+    }
   }, OBJECT_COPY_CONCURRENCY);
 
   q.error((err, { obj }) => {
