@@ -14,7 +14,7 @@ import {
 } from './s3-helper.js';
 
 const OBJECT_COPY_CONCURRENCY = 10;
-const LARGE_OBJECT_THRESHOLD_IN_BYTES = 2000;
+const LARGE_OBJECT_THRESHOLD_IN_BYTES = 2 * 1000 * 1000;
 
 const dumpDir = path.resolve('./dump');
 

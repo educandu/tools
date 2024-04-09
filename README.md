@@ -60,7 +60,7 @@ $ export S3_BUCKET_NAME_STAG='stag.bucket.name'
 `$ ./copy-data -from STAG -to INT -anonymize -skiplarge`
 
 The `-anonymize` flag is optional and setting it will anonymize all users in the DB.
-The `-skiplarge` flag is optional and setting it will skip copying CDN data larger than 2000 bytes.
+The `-skiplarge` flag is optional and setting it will skip copying CDN data larger than 2 Mb.
 
 ### Running `dump-db`
 
