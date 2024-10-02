@@ -33,7 +33,7 @@ const getConfigFromParsingArguments = () => {
 
   console.log(`Pruning \n${JSON.stringify(pruneEnv)}\n`);
 
-  const mongoOptions = { useUnifiedTopology: true, serverApi: ServerApiVersion.v1 };
+  const mongoOptions = { serverApi: ServerApiVersion.v1 };
   const mongoClient = await MongoClient.connect(pruneEnv.dbUri, mongoOptions);
   const db = mongoClient.db();
   await dropAllCollections(db);

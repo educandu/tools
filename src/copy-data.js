@@ -85,7 +85,7 @@ const canCopyDirectlyWithinS3 = (env1, env2) => {
   });
 
   if (shouldAnonymizeUsers) {
-    const mongoOptions = { useUnifiedTopology: true, serverApi: ServerApiVersion.v1 };
+    const mongoOptions = { serverApi: ServerApiVersion.v1 };
     const mongoClient = await MongoClient.connect(destinationEnv.dbUri, mongoOptions);
     const usersCollection = await mongoClient.db().collection('users');
 
