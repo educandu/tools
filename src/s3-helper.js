@@ -85,7 +85,7 @@ export async function deleteAllObjects(s3, bucketName) {
   }
 }
 
-function headObject({ s3, bucketName, objectKey }) {
+export function headObject({ s3, bucketName, objectKey }) {
   return retryPromise(() => {
     return s3.headObject({ Bucket: bucketName, Key: objectKey });
   }, `HEAD ${objectKey}`);
