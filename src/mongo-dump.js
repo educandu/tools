@@ -4,76 +4,48 @@ import { mkdirp } from 'mkdirp';
 import { deleteAsync } from 'del';
 import { fileURLToPath } from 'node:url';
 
-let mongoToolBuilt = false;
 const CONTAINER_DUMP_DIR = '/mongodump';
+const MONGO_TOOLS_IMAGE = 'educandu/mongotools:1.0.0';
 const packageDirName = path.dirname(fileURLToPath(import.meta.url));
 const packageParentDirName = path.dirname(packageDirName);
 
-function runCommand(cmd, args) {
-  console.log([cmd, ...args].join(' '));
-  return execa(cmd, args, { stdio: 'inherit', cwd: packageParentDirName });
-}
-
-async function ensureMongoTools() {
-  if (!mongoToolBuilt) {
-    await runCommand('docker', ['build', '-t', 'mongotools', '.']);
-    // eslint-disable-next-line require-atomic-updates
-    mongoToolBuilt = true;
-  }
-}
-
-async function getUserAndGroupId() {
+async function dockerRunOnceWithCurrentUser(args) {
   const { stdout: userId } = await execa('id', ['-u', process.env.USER]);
   const { stdout: groupId } = await execa('id', ['-g', process.env.USER]);
-  return { userId, groupId };
+
+  const combinedArgs = ['run', '--rm', '--user', `${userId}:${groupId}`, ...args];
+
+  console.log(`Running with user ID ${userId} and group ID ${groupId}:`);
+  console.log(['docker', ...combinedArgs].join(' '));
+  return execa('docker', combinedArgs, { stdio: 'inherit', cwd: packageParentDirName });
 }
 
 export async function dumpDb({ uri, directory, db }) {
-  await ensureMongoTools();
-
-  const { userId, groupId } = await getUserAndGroupId();
-  console.log(`Running with user ID ${userId} and group ID ${groupId}`);
-
   const localDumpDbDir = path.join(directory, db);
 
   console.log(`Purging directory ${localDumpDbDir}`);
   await deleteAsync(localDumpDbDir);
   await mkdirp(localDumpDbDir);
 
-  const args = [
-    'run',
-    '--rm',
-    '--user',
-    `${userId}:${groupId}`,
+  return dockerRunOnceWithCurrentUser([
     '-v',
     [directory, CONTAINER_DUMP_DIR].join(':'),
-    'mongotools',
+    MONGO_TOOLS_IMAGE,
     'mongodump',
     '--uri',
     uri,
     '--out',
     CONTAINER_DUMP_DIR
-  ];
-
-  return runCommand('docker', args);
+  ]);
 }
 
-export async function restoreDb({ uri, directory, fromDb, toDb }) {
-  await ensureMongoTools();
-
-  const { userId, groupId } = await getUserAndGroupId();
-  console.log(`Running with user ID ${userId} and group ID ${groupId}`);
-
+export function restoreDb({ uri, directory, fromDb, toDb }) {
   const containerRestoreDbDir = path.join(CONTAINER_DUMP_DIR, fromDb);
 
-  const args = [
-    'run',
-    '--rm',
-    '--user',
-    `${userId}:${groupId}`,
+  return dockerRunOnceWithCurrentUser([
     '-v',
     [directory, CONTAINER_DUMP_DIR].join(':'),
-    'mongotools',
+    MONGO_TOOLS_IMAGE,
     'mongorestore',
     '--drop',
     '--uri',
@@ -85,7 +57,5 @@ export async function restoreDb({ uri, directory, fromDb, toDb }) {
     '--nsTo',
     toDb,
     containerRestoreDbDir
-  ];
-
-  return runCommand('docker', args);
+  ]);
 }
