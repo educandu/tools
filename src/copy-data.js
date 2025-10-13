@@ -1,5 +1,6 @@
 import path from 'node:path';
 import { queue } from 'async';
+import { deleteAsync } from 'del';
 import { ensureEnv } from './env-helper.js';
 import { anonymizeUsers } from './user-helper.js';
 import { upsertItemById } from './mongo-helper.js';
@@ -83,6 +84,8 @@ const canCopyDirectlyWithinS3 = (env1, env2) => {
     fromDb: sourceEnv.dbName,
     toDb: destinationEnv.dbName
   });
+
+  await deleteAsync(dumpDir);
 
   if (shouldAnonymizeUsers) {
     const mongoOptions = { serverApi: ServerApiVersion.v1 };
